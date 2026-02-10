@@ -49,6 +49,14 @@ void gw_print_value(gw_value_t *v)
  */
 void gw_stmt_print(void)
 {
+    /* Check for USING */
+    gw_skip_spaces();
+    if (gw_chrgot() == TOK_USING) {
+        gw_chrget();
+        gw_print_using(NULL);
+        return;
+    }
+
     int need_newline = 1;
     int screen_width = 80;
     if (gw_hal)

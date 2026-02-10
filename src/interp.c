@@ -474,6 +474,75 @@ gw_value_t gw_eval_fn_call(void)
 }
 
 /* ================================================================
+ * MID$ Assignment
+ * ================================================================ */
+
+void gw_stmt_mid_assign(void)
+{
+    /* Called after TOK_PREFIX_FF FUNC_MID consumed, at '(' */
+    gw_chrget();  /* skip '(' */
+
+    /* Parse the target variable */
+    char name[2];
+    gw_valtype_t type = gw_parse_varname(name);
+    if (type != VT_STR)
+        gw_error(ERR_TM);
+
+    gw_skip_spaces();
+    var_entry_t *var = NULL;
+    gw_value_t *arr_elem = NULL;
+    if (gw_chrgot() == '(') {
+        arr_elem = gw_array_element(name, type);
+    } else {
+        var = gw_var_find_or_create(name, type);
+    }
+
+    gw_skip_spaces();
+    gw_expect(',');
+    int start = gw_eval_int();
+    if (start < 1) gw_error(ERR_FC);
+
+    int maxlen = -1;
+    gw_skip_spaces();
+    if (gw_chrgot() == ',') {
+        gw_chrget();
+        maxlen = gw_eval_int();
+        if (maxlen < 0) gw_error(ERR_FC);
+    }
+
+    gw_expect_rparen();
+    gw_skip_spaces();
+    gw_expect(TOK_EQ);
+
+    gw_value_t rhs = gw_eval_str();
+
+    /* Get pointer to the target string */
+    gw_string_t *target;
+    if (arr_elem) {
+        target = &arr_elem->sval;
+    } else {
+        target = &var->val.sval;
+    }
+
+    /* Perform in-place replacement */
+    int pos = start - 1;  /* 0-based */
+    if (pos >= target->len) {
+        gw_str_free(&rhs.sval);
+        return;  /* nothing to replace */
+    }
+
+    int replace_len = rhs.sval.len;
+    int available = target->len - pos;
+    if (maxlen >= 0 && replace_len > maxlen)
+        replace_len = maxlen;
+    if (replace_len > available)
+        replace_len = available;
+
+    memcpy(target->data + pos, rhs.sval.data, replace_len);
+    gw_str_free(&rhs.sval);
+}
+
+/* ================================================================
  * Statement Dispatcher
  * ================================================================ */
 
@@ -496,6 +565,11 @@ void gw_exec_stmt(void)
     /* PRINT / ? */
     if (tok == TOK_PRINT || tok == '?') {
         gw_chrget();
+        gw_skip_spaces();
+        if (gw_chrgot() == '#') {
+            gw_stmt_print_file();
+            return;
+        }
         gw_stmt_print();
         return;
     }
@@ -520,13 +594,25 @@ void gw_exec_stmt(void)
         return;
     }
 
-    /* SYSTEM */
+    /* Extended statements (0xFE prefix) */
     if (tok == TOK_PREFIX_FE) {
         uint8_t *save = gw.text_ptr;
         gw_chrget();
-        if (gw_chrgot() == XSTMT_SYSTEM) {
+        uint8_t xstmt = gw_chrgot();
+        if (xstmt == XSTMT_SYSTEM) {
+            gw_file_close_all();
             if (gw_hal) gw_hal->shutdown();
             exit(0);
+        }
+        /* Graphics/sound stubs - parse and discard arguments */
+        if (xstmt == XSTMT_CIRCLE || xstmt == XSTMT_DRAW ||
+            xstmt == XSTMT_PAINT  || xstmt == XSTMT_PLAY ||
+            xstmt == XSTMT_VIEW   || xstmt == XSTMT_WINDOW ||
+            xstmt == XSTMT_PALETTE) {
+            gw_chrget();
+            while (gw_chrgot() && gw_chrgot() != ':' && gw_chrgot() != TOK_ELSE)
+                gw.text_ptr++;
+            return;
         }
         gw.text_ptr = save;
     }
@@ -561,6 +647,7 @@ void gw_exec_stmt(void)
         gw_free_program();
         gw_vars_clear();
         gw_arrays_clear();
+        gw_file_close_all();
         memset(gw.fn_defs, 0, sizeof(gw.fn_defs));
         gw.for_sp = 0;
         gw.gosub_sp = 0;
@@ -583,6 +670,7 @@ void gw_exec_stmt(void)
         gw_chrget();
         gw_vars_clear();
         gw_arrays_clear();
+        gw_file_close_all();
         memset(gw.fn_defs, 0, sizeof(gw.fn_defs));
         gw.for_sp = 0;
         gw.gosub_sp = 0;
@@ -1096,17 +1184,34 @@ void gw_exec_stmt(void)
     /* INPUT */
     if (tok == TOK_INPUT) {
         gw_chrget();
+        gw_skip_spaces();
+        if (gw_chrgot() == '#') {
+            gw_stmt_input_file();
+            return;
+        }
         gw_stmt_input();
         return;
     }
 
-    /* LINE INPUT */
+    /* LINE INPUT / LINE (graphics stub) */
     if (tok == TOK_LINE) {
         gw_chrget();
         gw_skip_spaces();
         if (gw_chrgot() == TOK_INPUT) {
             gw_chrget();
+            gw_skip_spaces();
+            if (gw_chrgot() == '#') {
+                gw_stmt_line_input_file();
+                return;
+            }
             gw_stmt_line_input();
+            return;
+        }
+        /* LINE (x1,y1)-(x2,y2) [,[color][,B[F]]] - graphics stub */
+        if (gw_chrgot() == '(' || gw_chrgot() == TOK_MINUS) {
+            /* Parse and discard all arguments */
+            while (gw_chrgot() && gw_chrgot() != ':' && gw_chrgot() != TOK_ELSE)
+                gw.text_ptr++;
             return;
         }
         gw_error(ERR_SN);
@@ -1287,6 +1392,28 @@ void gw_exec_stmt(void)
         return;
     }
 
+    /* SCREEN - graphics stub */
+    if (tok == TOK_SCREEN) {
+        gw_chrget();
+        gw_eval_int();  /* screen mode */
+        while (gw_chrgot() == ',') {
+            gw_chrget();
+            gw_skip_spaces();
+            if (gw_chrgot() != ',' && gw_chrgot() != 0 && gw_chrgot() != ':')
+                gw_eval_int();
+        }
+        return;
+    }
+
+    /* PSET / PRESET - graphics stub */
+    if (tok == TOK_PSET || tok == TOK_PRESET) {
+        gw_chrget();
+        /* Parse (x,y) [,color] and discard */
+        while (gw_chrgot() && gw_chrgot() != ':' && gw_chrgot() != TOK_ELSE)
+            gw.text_ptr++;
+        return;
+    }
+
     /* BEEP */
     if (tok == TOK_BEEP) {
         gw_chrget();
@@ -1317,9 +1444,49 @@ void gw_exec_stmt(void)
         return;
     }
 
+    /* OPEN */
+    if (tok == TOK_OPEN) {
+        gw_chrget();
+        gw_stmt_open();
+        return;
+    }
+
+    /* CLOSE */
+    if (tok == TOK_CLOSE) {
+        gw_chrget();
+        gw_stmt_close();
+        return;
+    }
+
+    /* SAVE */
+    if (tok == TOK_SAVE) {
+        gw_chrget();
+        gw_stmt_save();
+        return;
+    }
+
+    /* LOAD */
+    if (tok == TOK_LOAD) {
+        gw_chrget();
+        gw_stmt_load();
+        return;
+    }
+
+    /* MERGE */
+    if (tok == TOK_MERGE) {
+        gw_chrget();
+        gw_stmt_merge();
+        return;
+    }
+
     /* WRITE */
     if (tok == TOK_WRITE) {
         gw_chrget();
+        gw_skip_spaces();
+        if (gw_chrgot() == '#') {
+            gw_stmt_write_file();
+            return;
+        }
         int first = 1;
         for (;;) {
             gw_skip_spaces();
@@ -1347,6 +1514,22 @@ void gw_exec_stmt(void)
         }
         gw_print_newline();
         return;
+    }
+
+    /* MID$ assignment: MID$(var$, start [,len]) = expr */
+    if (tok == TOK_PREFIX_FF) {
+        uint8_t *save = gw.text_ptr;
+        gw_chrget();
+        if (gw_chrgot() == FUNC_MID) {
+            gw_chrget();
+            gw_skip_spaces();
+            if (gw_chrgot() == '(') {
+                gw_stmt_mid_assign();
+                return;
+            }
+        }
+        gw.text_ptr = save;
+        tok = gw_chrgot();
     }
 
     /* LET (explicit) */

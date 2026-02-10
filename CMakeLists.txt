@@ -26,6 +26,9 @@ set(SOURCES
     src/math_transcend.c
     src/strings.c
     src/print.c
+    src/fileio.c
+    src/program_io.c
+    src/print_using.c
     platform/hal_posix.c
 )
 

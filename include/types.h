@@ -3,6 +3,7 @@
 
 #include <stdint.h>
 #include <stdbool.h>
+#include <stdio.h>
 
 /* Value types matching GW-BASIC's VALTYP */
 typedef enum {
@@ -85,6 +86,14 @@ typedef struct {
     uint8_t *body_text;
     struct program_line *body_line;
 } fn_def_t;
+
+/* File entry for OPEN/CLOSE file table */
+typedef struct {
+    FILE *fp;
+    int mode;       /* 0=closed, 'I'=input, 'O'=output, 'A'=append */
+    int file_num;
+    bool eof_flag;
+} file_entry_t;
 
 /* MBF (Microsoft Binary Format) types for file compatibility */
 typedef struct {

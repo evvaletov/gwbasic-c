@@ -10,7 +10,7 @@
 #include "gw_math.h"
 #include "strings.h"
 
-#define GW_VERSION "0.2.0"
+#define GW_VERSION "0.3.0"
 #define GW_BANNER "GW-BASIC " GW_VERSION
 
 /* Tokenizer */
@@ -43,6 +43,28 @@ void gw_stmt_line_input(void);
 
 /* DEF FN evaluation (interp.c) */
 gw_value_t gw_eval_fn_call(void);
+
+/* File I/O (fileio.c) */
+file_entry_t *gw_file_get(int num);
+void gw_file_close_all(void);
+void gw_stmt_open(void);
+void gw_stmt_close(void);
+void gw_stmt_print_file(void);
+void gw_stmt_write_file(void);
+void gw_stmt_input_file(void);
+void gw_stmt_line_input_file(void);
+int  gw_file_eof(int num);
+
+/* Program I/O (program_io.c) */
+void gw_stmt_save(void);
+void gw_stmt_load(void);
+void gw_stmt_merge(void);
+
+/* PRINT USING (print_using.c) */
+void gw_print_using(FILE *fp);
+
+/* MID$ assignment (interp.c) */
+void gw_stmt_mid_assign(void);
 
 /* Error recovery for run loop */
 extern jmp_buf gw_run_jmp;

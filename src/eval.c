@@ -651,14 +651,41 @@ static gw_value_t eval_function(uint8_t prefix, uint8_t func_tok)
         v.ival = 1;
         return v;
 
+    case FUNC_EOF:
+    {
+        gw_expect('(');
+        int fnum = gw_eval_int();
+        gw_expect_rparen();
+        v.type = VT_INT;
+        v.ival = gw_file_eof(fnum);
+        return v;
+    }
+
+    case FUNC_LOC:
+    case FUNC_LOF:
+    {
+        gw_expect('(');
+        int fnum = gw_eval_int();
+        gw_expect_rparen();
+        /* LOC and LOF: return approximate values */
+        file_entry_t *lf = gw_file_get(fnum);
+        v.type = VT_SNG;
+        if (func_tok == FUNC_LOF) {
+            long cur = ftell(lf->fp);
+            fseek(lf->fp, 0, SEEK_END);
+            v.fval = (float)ftell(lf->fp);
+            fseek(lf->fp, cur, SEEK_SET);
+        } else {
+            v.fval = (float)(ftell(lf->fp) / 128 + 1);
+        }
+        return v;
+    }
+
     case FUNC_INP:
     case FUNC_PEEK:
     case FUNC_PEN:
     case FUNC_STICK:
     case FUNC_STRIG:
-    case FUNC_EOF:
-    case FUNC_LOC:
-    case FUNC_LOF:
         gw_expect('(');
         gw_eval();
         gw_expect_rparen();

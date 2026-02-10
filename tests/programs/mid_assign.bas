@@ -1,0 +1,7 @@
+10 REM MID$ assignment test
+20 A$="HELLO WORLD"
+30 MID$(A$,7,5)="BASIC"
+40 PRINT A$
+50 B$="ABCDEF"
+60 MID$(B$,1,2)="XY"
+70 PRINT B$

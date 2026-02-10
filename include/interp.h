@@ -55,6 +55,9 @@ typedef struct {
     program_line_t *data_line_ptr;
     uint16_t data_line;
 
+    /* File I/O table (#1-#15, index 0 unused) */
+    file_entry_t files[16];
+
     /* Error trapping */
     uint16_t on_error_line;
     bool in_error_handler;
