@@ -137,6 +137,17 @@ int gw_crunch(const char *text, uint8_t *out, int outsize)
                     in_data = 1;
                 continue;
             }
+
+            /* Not a keyword: copy entire variable name (letters + digits) */
+            while (isalnum((unsigned char)text[ip]) || text[ip] == '.') {
+                out[op++] = text[ip++];
+                if (op >= outsize - 2) break;
+            }
+            /* Copy type suffix if present */
+            if (text[ip] == '%' || text[ip] == '!' ||
+                text[ip] == '#' || text[ip] == '$')
+                out[op++] = text[ip++];
+            continue;
         }
 
         /* &H hex, &O octal, & octal */

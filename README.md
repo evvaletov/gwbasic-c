@@ -22,7 +22,7 @@ Interactive mode:
 
 ```
 $ ./gwbasic
-GW-BASIC 0.4.0
+GW-BASIC 0.5.0
 (C) Eremey Valetov 2026. MIT License.
 Based on Microsoft GW-BASIC assembly source.
 Ok
@@ -37,7 +37,7 @@ Ok
 Run a program file:
 
 ```bash
-./gwbasic examples/prime_sieve.bas
+./gwbasic tests/programs/prime_sieve.bas
 ```
 
 Pipe input:
@@ -56,7 +56,7 @@ echo '10 FOR I=1 TO 10:PRINT I*I;:NEXT' | ./gwbasic
 RND, FIX, CINT, CSNG, CDBL
 
 **String functions:** LEN, ASC, CHR$, VAL, STR$, LEFT$, RIGHT$, MID$,
-SPACE$, STRING$, HEX$, OCT$, INSTR
+SPACE$, STRING$, HEX$, OCT$, INSTR, INPUT$
 
 **Statements:**
 
@@ -65,18 +65,36 @@ SPACE$, STRING$, HEX$, OCT$, INSTR
 | Output | PRINT, LPRINT, PRINT USING, WRITE, CLS |
 | Variables | LET, DIM, ERASE, SWAP, DEFINT/SNG/DBL/STR |
 | Control flow | GOTO, GOSUB/RETURN, FOR/NEXT, IF/THEN/ELSE, WHILE/WEND, ON...GOTO/GOSUB |
-| Input | INPUT, LINE INPUT, DATA/READ/RESTORE |
+| Input | INPUT, LINE INPUT, DATA/READ/RESTORE, INKEY$ |
 | Program | RUN, RUN "file", CONT, STOP, END, NEW, LIST, CLEAR |
 | Sequential I/O | OPEN, CLOSE, PRINT#, WRITE#, INPUT#, LINE INPUT# |
 | Random-access I/O | FIELD, LSET, RSET, PUT, GET, CVI/CVS/CVD, MKI$/MKS$/MKD$ |
 | Program I/O | SAVE, LOAD, MERGE, CHAIN |
-| Error handling | ON ERROR GOTO, RESUME, ERROR |
+| Error handling | ON ERROR GOTO, RESUME, ERROR, ERR, ERL |
 | User functions | DEF FN, RANDOMIZE |
 | File management | KILL, NAME |
-| Screen | LOCATE, COLOR, WIDTH |
+| Screen | LOCATE, COLOR, WIDTH, SCREEN |
+| Graphics | PSET, PRESET, LINE, CIRCLE, DRAW, PAINT |
 
-Graphics statements (SCREEN, PSET, LINE, CIRCLE, DRAW, PAINT, etc.) are
-parsed but produce no output — programs that use them won't crash.
+### Graphics
+
+Graphics mode is activated with `SCREEN 1` (320×200, 4 colors) or
+`SCREEN 2` (640×200, monochrome). Drawing commands render to a virtual
+framebuffer and output via [Sixel graphics](https://en.wikipedia.org/wiki/Sixel),
+which works in terminals like xterm, mlterm, foot, and WezTerm.
+
+```
+SCREEN 1
+LINE (0,0)-(319,199), 1
+CIRCLE (160,100), 80, 2
+PAINT (160,100), 3, 2
+```
+
+### Terminal I/O
+
+When stdin is a terminal, the interpreter enters raw mode for real-time
+keyboard polling with `INKEY$` and character-at-a-time input with `INPUT$`.
+Piped input is handled normally without raw mode.
 
 ## Architecture
 
@@ -97,6 +115,7 @@ Source text → Tokenizer (CRUNCH) → Token stream
 | Tokenizer | tokenizer.c | GWMAIN.ASM |
 | Evaluator | eval.c | GWEVAL.ASM |
 | Interpreter | interp.c | BINTRP.ASM |
+| Graphics | graphics.c | — |
 | Tokens | tokens.c | IBMRES.ASM |
 | Errors | error.c | GWDATA.ASM |
 | Math | math_int.c, math_float.c, math_transcend.c | MATH1/2.ASM |
@@ -113,13 +132,10 @@ Key design differences from the original:
 
 ## Tests
 
-27 test programs in `tests/programs/`:
+39 test programs in `tests/programs/`, with CI via GitHub Actions:
 
 ```bash
-for f in tests/programs/*.bas; do
-    echo "$(basename $f):"
-    timeout 5 ./build/gwbasic "$f"
-done
+bash tests/run_tests.sh
 ```
 
 ## License

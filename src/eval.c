@@ -833,7 +833,7 @@ static gw_value_t eval_atom(void)
         gw_chrget();
         gw_value_t v;
         v.type = VT_INT;
-        v.ival = 0;
+        v.ival = gw.err_line_num;
         return v;
     }
     if (tok == TOK_ERR) {

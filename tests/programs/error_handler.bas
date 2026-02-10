@@ -7,5 +7,5 @@
 70 X = 1 / 0
 80 PRINT "After second resume"
 90 PRINT "Error handler OK" : END
-100 PRINT "Caught error"; ERR
+100 PRINT "Caught error"; ERR; "at line"; ERL
 110 RESUME NEXT
