@@ -279,6 +279,22 @@ static void stmt_restore(void)
         if (!gw.data_line_ptr)
             gw_error(ERR_UL);
         gw.data_ptr = gw.data_line_ptr->tokens;
+        /* Scan to the DATA token and skip past it so read_data_item
+           finds values, not the keyword.  If the target line has no
+           DATA, data_ptr ends at '\0' and the next READ will call
+           advance_data_ptr to move to subsequent lines. */
+        while (*gw.data_ptr && *gw.data_ptr != TOK_DATA) {
+            if (*gw.data_ptr == '"') {
+                gw.data_ptr++;
+                while (*gw.data_ptr && *gw.data_ptr != '"')
+                    gw.data_ptr++;
+                if (*gw.data_ptr == '"') gw.data_ptr++;
+                continue;
+            }
+            gw.data_ptr++;
+        }
+        if (*gw.data_ptr == TOK_DATA)
+            gw.data_ptr++;
     } else {
         gw.data_line_ptr = NULL;
         gw.data_ptr = NULL;

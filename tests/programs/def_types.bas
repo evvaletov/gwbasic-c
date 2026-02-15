@@ -1,0 +1,29 @@
+10 REM Type declarations, RESTORE with line#, ON GOSUB
+20 DEFINT A-C
+30 DEFSNG D-F
+40 DEFSTR S-T
+50 A = 3.7
+60 IF A <> 4 THEN PRINT "FAIL: DEFINT A should round 3.7 to 4, got"; A : END
+70 D = 3.14159
+80 IF D < 3.14 OR D > 3.15 THEN PRINT "FAIL: DEFSNG D unexpected"; D : END
+90 S = "hello"
+100 IF S <> "hello" THEN PRINT "FAIL: DEFSTR S should hold string" : END
+110 REM RESTORE with line number
+120 DATA 10, 20, 30
+200 DATA 40, 50, 60
+210 RESTORE 200
+220 READ X
+230 IF X <> 40 THEN PRINT "FAIL: RESTORE 200 should read 40, got"; X : END
+240 RESTORE 120
+250 READ Y
+260 IF Y <> 10 THEN PRINT "FAIL: RESTORE 120 should read 10, got"; Y : END
+270 REM ON GOSUB
+280 FOR I = 1 TO 3
+290   ON I GOSUB 400, 410, 420
+300 NEXT I
+310 IF R <> 6 THEN PRINT "FAIL: ON GOSUB sum should be 6, got"; R : END
+320 PRINT "Type declarations OK"
+330 END
+400 R = R + 1 : RETURN
+410 R = R + 2 : RETURN
+420 R = R + 3 : RETURN
