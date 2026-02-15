@@ -14,7 +14,8 @@ mkdir -p build && cd build
 cmake .. && make
 ```
 
-Requires a C11 compiler and CMake 3.10+. No other dependencies.
+Requires a C11 compiler and CMake 3.10+. PulseAudio (`libpulse-simple`)
+is optional — detected at build time for `SOUND`/`BEEP`/`PLAY` support.
 
 ## Usage
 
@@ -75,6 +76,7 @@ SPACE$, STRING$, HEX$, OCT$, INSTR, INPUT$
 | File management | KILL, NAME |
 | Screen | LOCATE, COLOR, WIDTH, SCREEN |
 | Graphics | PSET, PRESET, LINE, CIRCLE, DRAW, PAINT |
+| Sound | SOUND, BEEP, PLAY (MML) |
 
 ### Graphics
 
@@ -122,6 +124,7 @@ Source text → Tokenizer (CRUNCH) → Token stream
 | Strings | strings.c | BISTRS.ASM |
 | File I/O | fileio.c | BIPTRG.ASM |
 | PRINT USING | print_using.c | BIPRTU.ASM |
+| Sound | sound.c | — |
 | Platform | hal_posix.c | OEM*.ASM |
 
 Key design differences from the original:
@@ -132,7 +135,7 @@ Key design differences from the original:
 
 ## Tests
 
-39 test programs in `tests/programs/`, with CI via GitHub Actions:
+50 test programs in `tests/programs/`, with CI via GitHub Actions:
 
 ```bash
 bash tests/run_tests.sh
