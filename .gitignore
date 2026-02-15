@@ -1,4 +1,5 @@
 build/
+docs/_build/
 *.o
 *.d
 gwbasic_*.txt

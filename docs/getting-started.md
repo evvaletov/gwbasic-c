@@ -1,0 +1,71 @@
+# Getting Started
+
+## Dependencies
+
+- C11 compiler (GCC or Clang)
+- CMake 3.10+
+- PulseAudio development library (`libpulse-simple`) — optional, for `SOUND`/`BEEP`/`PLAY`
+
+On Debian/Ubuntu:
+
+```bash
+sudo apt-get install build-essential cmake libpulse-dev
+```
+
+On Fedora/RHEL:
+
+```bash
+sudo dnf install gcc cmake pulseaudio-libs-devel
+```
+
+## Building
+
+```bash
+git clone https://github.com/evvaletov/gwbasic-c.git
+cd gwbasic-c
+mkdir -p build && cd build
+cmake .. && make
+```
+
+The binary is `build/gwbasic`.
+
+## Usage
+
+### Interactive Mode
+
+```
+$ ./gwbasic
+GW-BASIC 0.5.0
+(C) Eremey Valetov 2026. MIT License.
+Based on Microsoft GW-BASIC assembly source.
+Ok
+PRINT 2+2
+ 4
+Ok
+FOR I=1 TO 5:PRINT I;:NEXT
+ 1  2  3  4  5
+Ok
+```
+
+### Running a Program File
+
+```bash
+./gwbasic tests/programs/prime_sieve.bas
+```
+
+### Piped Input
+
+```bash
+echo '10 FOR I=1 TO 10:PRINT I*I;:NEXT' | ./gwbasic
+```
+
+### Direct Mode Expressions
+
+Type expressions and statements at the `Ok` prompt:
+
+```
+PRINT SIN(3.14159/2)
+ 1
+A$="HELLO WORLD":MID$(A$,7,5)="BASIC":PRINT A$
+HELLO BASIC
+```
