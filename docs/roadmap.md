@@ -7,9 +7,10 @@
 - **Binary SAVE/LOAD** — Protected (,P) and tokenized binary formats
 - **DEF SEG / PEEK / POKE** — Memory-mapped I/O emulation for common BIOS/screen
   addresses
-- **Compatibility testing** — Automated test suite comparing output against
-  original GWBASIC.EXE under DOSBox-X
 - **GET/PUT** — Sprite capture and blit for graphics mode
+- **TUI color support** — Map GW-BASIC COLOR attributes to ANSI 16-color output
+- **INKEY$ extended keys** — Return CHR$(0) + scan code for arrow keys and
+  function keys, matching the original two-byte encoding
 
 ## IDE and Notebook Integration
 

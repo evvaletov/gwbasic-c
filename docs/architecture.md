@@ -9,6 +9,8 @@ Source text → Tokenizer (CRUNCH) → Token stream
                                       ↓
                               Statement dispatcher (NEWSTT)
                                       ↓
+                              TUI screen buffer (interactive)
+                                      ↓
                               HAL (platform I/O)
 ```
 
@@ -17,6 +19,11 @@ are tokenized by CRUNCH into a compact token stream. The NEWSTT loop dispatches
 each statement, calling FRMEVL for expression evaluation. All platform I/O goes
 through a HAL vtable (`hal_ops_t`), keeping the core interpreter portable.
 
+When running interactively, the TUI layer intercepts HAL output calls
+(`putch`, `puts`, `cls`, `locate`) and routes them through a 25×80 screen
+buffer rendered via ANSI escape sequences. In piped mode the TUI is not
+activated and the HAL writes directly to stdout.
+
 ## Module Map
 
 | Module | Source | Original Assembly |
@@ -24,6 +31,7 @@ through a HAL vtable (`hal_ops_t`), keeping the core interpreter portable.
 | Tokenizer (CRUNCH/LIST) | `tokenizer.c` | GWMAIN.ASM |
 | Expression evaluator | `eval.c` | GWEVAL.ASM |
 | Execution loop + control flow | `interp.c` | BINTRP.ASM |
+| TUI screen editor | `tui.c` | — |
 | Graphics engine | `graphics.c` | — |
 | Token/keyword tables | `tokens.c`, `tokens.h` | IBMRES.ASM |
 | Error handling | `error.c` | GWDATA.ASM |
@@ -43,13 +51,27 @@ through a HAL vtable (`hal_ops_t`), keeping the core interpreter portable.
 ## Source Layout
 
 ```
-src/         — core interpreter (19 files)
-include/     — headers (11 files)
+src/         — core interpreter (20 files)
+include/     — headers (12 files)
 platform/    — HAL backends (1 file)
-tests/       — test programs (50 .BAS files)
+tests/       — test programs (50 .BAS files), compat test harness
 ```
 
-~8,600 lines of C11.
+## TUI Architecture
+
+The TUI (`tui.c`) implements the classic GW-BASIC full-screen editor:
+
+- **Screen buffer** — `tui_cell_t screen[25][80]` stores character + attribute
+  per cell, matching the original CGA text mode layout.
+- **HAL interception** — `tui_init()` swaps HAL function pointers so all
+  existing PRINT/LIST/error output automatically goes through the screen buffer.
+  No changes needed to `print.c`, `error.c`, or most of `interp.c`.
+- **Line editor** — `tui_read_line()` implements the defining GW-BASIC UX:
+  free cursor movement with arrow keys, and pressing Enter on any screen line
+  re-enters that line's content as BASIC input.
+- **Function keys** — F1-F10 with default GW-BASIC bindings, configurable via
+  the `KEY n, "string"` statement. `KEY ON` shows the bar on row 25.
+- **Break handling** — SIGINT sets a flag checked each statement in the run loop.
 
 ## Design Decisions
 
@@ -69,3 +91,5 @@ algorithms in idiomatic C with modern data structures.
 - **malloc'd strings** — instead of a compacting garbage collector
 - **`setjmp`/`longjmp`** — for error recovery, matching the original's stack reset
   behavior
+- **ANSI terminal** — TUI uses ANSI escape sequences and alternate screen buffer
+  instead of direct CGA memory access

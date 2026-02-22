@@ -1,4 +1,4 @@
-# gwbasic-c
+# GW-BASIC 2026
 
 A portable C reimplementation of Microsoft GW-BASIC, using the
 [original 8088 assembly source](https://github.com/microsoft/GW-BASIC)
@@ -11,11 +11,12 @@ version is structured as modular C suitable for new feature development.
 
 ## Highlights
 
-- **~8,600 lines of C11** with 50 test programs
+- **Authentic full-screen editor** — 25×80 screen buffer, free cursor movement,
+  Enter-on-any-line, F1-F10 function keys, Insert/Overwrite toggle
 - **Sixel graphics** — `SCREEN 1`/`SCREEN 2` rendering in compatible terminals
 - **Sound** — `SOUND`, `BEEP`, `PLAY` (MML) via PulseAudio
 - **Full file I/O** — sequential, random-access, SAVE/LOAD/MERGE/CHAIN
-- **Terminal I/O** — raw mode for `INKEY$` and `INPUT$`
+- **50 test programs** with DOSBox-X compatibility testing against real GWBASIC.EXE
 - **MIT License**
 
 ```{toctree}

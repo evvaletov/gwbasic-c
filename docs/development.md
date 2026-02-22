@@ -11,6 +11,7 @@
 | 5 | `1f4c460` | CI, terminal I/O (raw mode), Sixel graphics, 13 classic programs, AND/OR precedence fix |
 | 5+ | `169f16d` | SOUND/BEEP/PLAY with PulseAudio backend |
 | 5+ | `691031a` | Fix RESTORE with line number, 8 Rosetta Code test programs |
+| 6 | | Full-screen TUI editor, KEY statement, Ctrl+Break, DOSBox-X compat testing, project rename |
 
 ## Tests
 
@@ -20,11 +21,25 @@
 bash tests/run_tests.sh
 ```
 
-Each test has a 5-second timeout and compares output against expected results.
+Each test has a 5-second timeout. When `.expected` files are present
+(generated from real GWBASIC.EXE), the runner also reports compatibility
+match status.
+
+### Compatibility Testing
+
+Compare output against real GWBASIC.EXE running under DOSBox-X:
+
+```bash
+# Generate .expected files from GWBASIC.EXE (requires DOSBox-X Flatpak)
+bash tests/run_compat.sh --generate
+
+# Compare gwbasic output against .expected
+bash tests/run_compat.sh
+```
 
 ## CI
 
 GitHub Actions runs on every push to `main` and on pull requests. The workflow
 builds the project with PulseAudio support and runs all 50 test programs.
 
-See [`.github/workflows/ci.yml`](https://github.com/evvaletov/gwbasic-c/blob/main/.github/workflows/ci.yml).
+See [`.github/workflows/ci.yml`](https://github.com/evvaletov/gw-basic-2026/blob/main/.github/workflows/ci.yml).

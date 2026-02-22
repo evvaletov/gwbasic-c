@@ -1,4 +1,4 @@
-# gwbasic-c
+# GW-BASIC 2026
 
 A portable C reimplementation of Microsoft GW-BASIC, using the
 [original 8088 assembly source](https://github.com/microsoft/GW-BASIC)
@@ -19,11 +19,11 @@ is optional — detected at build time for `SOUND`/`BEEP`/`PLAY` support.
 
 ## Usage
 
-Interactive mode:
+Interactive mode launches the authentic GW-BASIC full-screen editor:
 
 ```
 $ ./gwbasic
-GW-BASIC 0.5.0
+GW-BASIC 2026 0.5.0
 (C) Eremey Valetov 2026. MIT License.
 Based on Microsoft GW-BASIC assembly source.
 Ok
@@ -74,9 +74,22 @@ SPACE$, STRING$, HEX$, OCT$, INSTR, INPUT$
 | Error handling | ON ERROR GOTO, RESUME, ERROR, ERR, ERL |
 | User functions | DEF FN, RANDOMIZE |
 | File management | KILL, NAME |
-| Screen | LOCATE, COLOR, WIDTH, SCREEN |
+| Screen | LOCATE, COLOR, WIDTH, SCREEN, KEY ON/OFF/LIST |
 | Graphics | PSET, PRESET, LINE, CIRCLE, DRAW, PAINT |
 | Sound | SOUND, BEEP, PLAY (MML) |
+
+### Full-Screen Editor (TUI)
+
+When running interactively, GW-BASIC 2026 presents the authentic full-screen
+editor that people remember from the 1980s:
+
+- 25×80 screen buffer with free cursor movement (arrow keys)
+- **Enter on any screen line** re-enters it as BASIC input
+- Insert/Overwrite toggle (Insert key, cursor shape changes)
+- Function key bar on line 25 (`KEY ON`/`KEY OFF`/`KEY LIST`)
+- Default F1-F10 bindings (F1=LIST, F2=RUN, F3=LOAD", etc.)
+- Ctrl+C interrupts running programs
+- Piped input bypasses the TUI entirely — scripts and test harnesses work unchanged
 
 ### Graphics
 
@@ -92,12 +105,6 @@ CIRCLE (160,100), 80, 2
 PAINT (160,100), 3, 2
 ```
 
-### Terminal I/O
-
-When stdin is a terminal, the interpreter enters raw mode for real-time
-keyboard polling with `INKEY$` and character-at-a-time input with `INPUT$`.
-Piped input is handled normally without raw mode.
-
 ## Architecture
 
 The interpreter follows the original GW-BASIC's internal structure:
@@ -109,6 +116,8 @@ Source text → Tokenizer (CRUNCH) → Token stream
                                       ↓
                               Statement dispatcher (NEWSTT)
                                       ↓
+                              TUI screen buffer (interactive)
+                                      ↓
                               HAL (platform I/O)
 ```
 
@@ -117,6 +126,7 @@ Source text → Tokenizer (CRUNCH) → Token stream
 | Tokenizer | tokenizer.c | GWMAIN.ASM |
 | Evaluator | eval.c | GWEVAL.ASM |
 | Interpreter | interp.c | BINTRP.ASM |
+| TUI editor | tui.c | — |
 | Graphics | graphics.c | — |
 | Tokens | tokens.c | IBMRES.ASM |
 | Errors | error.c | GWDATA.ASM |
@@ -139,6 +149,13 @@ Key design differences from the original:
 
 ```bash
 bash tests/run_tests.sh
+```
+
+Compatibility testing against real GWBASIC.EXE under DOSBox-X:
+
+```bash
+bash tests/run_compat.sh --generate   # generate .expected from GWBASIC.EXE
+bash tests/run_compat.sh              # compare gwbasic output against .expected
 ```
 
 ## License

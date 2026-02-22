@@ -21,8 +21,8 @@ sudo dnf install gcc cmake pulseaudio-libs-devel
 ## Building
 
 ```bash
-git clone https://github.com/evvaletov/gwbasic-c.git
-cd gwbasic-c
+git clone https://github.com/evvaletov/gw-basic-2026.git
+cd gw-basic-2026
 mkdir -p build && cd build
 cmake .. && make
 ```
@@ -33,9 +33,11 @@ The binary is `build/gwbasic`.
 
 ### Interactive Mode
 
+Running `./gwbasic` with no arguments launches the full-screen editor:
+
 ```
 $ ./gwbasic
-GW-BASIC 0.5.0
+GW-BASIC 2026 0.5.0
 (C) Eremey Valetov 2026. MIT License.
 Based on Microsoft GW-BASIC assembly source.
 Ok
@@ -46,6 +48,9 @@ FOR I=1 TO 5:PRINT I;:NEXT
  1  2  3  4  5
 Ok
 ```
+
+Use arrow keys to move the cursor freely. Press Enter on any screen line to
+re-enter it. F1-F10 insert common commands (F2 runs the program).
 
 ### Running a Program File
 

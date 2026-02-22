@@ -52,7 +52,7 @@ type suffixes (`%`, `!`, `#`)
 | Error handling | `ON ERROR GOTO`, `RESUME`, `RESUME NEXT`, `RESUME n`, `ERROR`, `ERR`, `ERL` |
 | User functions | `DEF FN`, `RANDOMIZE` |
 | File management | `KILL`, `NAME` |
-| Screen | `LOCATE`, `COLOR`, `WIDTH`, `SCREEN` |
+| Screen | `LOCATE`, `COLOR`, `WIDTH`, `SCREEN`, `KEY ON`/`OFF`/`LIST`, `KEY n,"string"` |
 | Graphics | `PSET`, `PRESET`, `LINE`, `CIRCLE`, `DRAW`, `PAINT` |
 | Sound | `SOUND`, `BEEP`, `PLAY` (MML parser, PulseAudio backend) |
 | Misc | `POKE`, `KEY`, `TRON`/`TROFF`, `OPTION BASE`, `MID$` assignment, `COMMON` |
@@ -92,9 +92,37 @@ PAINT (160,100), 3, 2
 
 Sound output uses PulseAudio when available; commands are silently ignored otherwise.
 
-## Terminal I/O
+## Full-Screen Editor (TUI)
 
-When stdin is a terminal, the interpreter enters POSIX raw mode for real-time
-keyboard polling with `INKEY$` and character-at-a-time input with `INPUT$(n)`.
-Piped input is handled normally without raw mode. `INPUT` and `LINE INPUT`
-temporarily exit raw mode for cooked-mode line editing.
+When running interactively, GW-BASIC 2026 presents the authentic full-screen
+editor:
+
+- 25×80 screen buffer with free cursor movement (arrow keys)
+- Press Enter on any screen line to re-enter it as BASIC input
+- Insert/Overwrite toggle (Insert key)
+- Home/End/Delete/Backspace/Escape for line editing
+- Ctrl+C interrupts running programs
+- Uses the ANSI alternate screen buffer for clean terminal restore on exit
+
+### Function Keys
+
+Default F1-F10 bindings match the original GW-BASIC:
+
+| Key | Default | Key | Default |
+|-----|---------|-----|---------|
+| F1 | `LIST ` | F6 | `,"LPT1:"` + Enter |
+| F2 | `RUN` + Enter | F7 | `TRON` + Enter |
+| F3 | `LOAD"` | F8 | `TROFF` + Enter |
+| F4 | `SAVE"` | F9 | `KEY ` |
+| F5 | `CONT` + Enter | F10 | `SCREEN 0,0,0` + Enter |
+
+- `KEY ON` — show the function key bar on line 25
+- `KEY OFF` — hide the bar
+- `KEY LIST` — display all definitions
+- `KEY n, "string"` — redefine a function key
+
+### Piped Mode
+
+When stdin is not a terminal (piped input), the TUI is not activated.
+The interpreter reads lines from stdin and writes output directly to stdout,
+suitable for scripting and test harnesses.

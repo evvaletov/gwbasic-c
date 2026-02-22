@@ -1,4 +1,5 @@
 #include "gwbasic.h"
+#include "tui.h"
 #include <ctype.h>
 #include <string.h>
 #include <stdlib.h>
@@ -12,6 +13,10 @@
 
 static char *read_input_line(void)
 {
+    /* Use TUI line editor when TUI is active */
+    if (tui.active)
+        return tui_read_line();
+
     static char buf[256];
     if (gw_hal) gw_hal->disable_raw();
     if (fgets(buf, sizeof(buf), stdin) == NULL) {

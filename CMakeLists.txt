@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.10)
-project(gwbasic C)
+project(gw-basic-2026 C)
 
 set(CMAKE_C_STANDARD 11)
 set(CMAKE_C_STANDARD_REQUIRED ON)
@@ -35,6 +35,7 @@ set(SOURCES
     src/print_using.c
     src/graphics.c
     src/sound.c
+    src/tui.c
     platform/hal_posix.c
 )
 

@@ -1,4 +1,5 @@
 #include "gwbasic.h"
+#include "tui.h"
 #include "graphics.h"
 #include "sound.h"
 #include <ctype.h>
@@ -1808,16 +1809,42 @@ void gw_exec_stmt(void)
         return;
     }
 
-    /* KEY - parse and ignore */
+    /* KEY statement */
     if (tok == TOK_KEY) {
         gw_chrget();
         gw_skip_spaces();
-        if (gw_chrgot() == TOK_ON || gw_chrgot() == TOK_OFF) {
+        if (gw_chrgot() == TOK_ON) {
             gw_chrget();
+            tui_key_on();
             return;
         }
-        while (gw_chrgot() && gw_chrgot() != ':')
-            gw.text_ptr++;
+        if (gw_chrgot() == TOK_OFF) {
+            gw_chrget();
+            tui_key_off();
+            return;
+        }
+        if (gw_chrgot() == TOK_LIST) {
+            gw_chrget();
+            tui_key_list();
+            return;
+        }
+        /* KEY n, "string" */
+        {
+            gw_value_t v = gw_eval();
+            int n = gw_to_int(&v);
+            if (n < 1 || n > 10) gw_error(ERR_FC);
+            gw_skip_spaces();
+            gw_expect(',');
+            gw_value_t s = gw_eval();
+            if (s.type != VT_STR) gw_error(ERR_TM);
+            int len = s.sval.len;
+            if (len > 15) len = 15;
+            memcpy(tui.fkey_defs[n - 1], s.sval.data, len);
+            tui.fkey_defs[n - 1][len] = '\0';
+            gw_str_free(&s.sval);
+            if (tui.key_bar_visible)
+                tui_key_on();  /* refresh bar */
+        }
         return;
     }
 
@@ -1976,6 +2003,10 @@ void gw_run_loop(void)
     }
 
     while (gw.running) {
+        /* Check for Ctrl+Break */
+        if (tui.active)
+            tui_check_break();
+
         gw_skip_spaces();
         uint8_t ch = gw_chrgot();
 

@@ -1,4 +1,5 @@
 #include "gwbasic.h"
+#include "tui.h"
 #include "sound.h"
 #include <stdio.h>
 #include <stdlib.h>
@@ -153,7 +154,7 @@ static void print_banner(int interactive)
     if (!interactive)
         return;
     const char *banner =
-        "GW-BASIC " GW_VERSION "\n"
+        "GW-BASIC 2026 " GW_VERSION "\n"
         "(C) Eremey Valetov 2026. MIT License.\n"
         "Based on Microsoft GW-BASIC assembly source.\n";
     if (gw_hal)
@@ -225,27 +226,32 @@ int main(int argc, char **argv)
         }
     }
 
+    /* Initialize TUI for interactive sessions */
+    if (interactive)
+        tui_init();
+
     print_banner(interactive);
 
     for (;;) {
         if (interactive) {
-            fputs("Ok\n", stdout);
-            fflush(stdout);
+            gw_hal->puts("Ok\n");
         }
 
-        char *line = read_line();
+        if (setjmp(gw_error_jmp) != 0)
+            continue;
+
+        char *line = interactive ? tui_read_line() : read_line();
         if (!line)
             break;
 
         if (line[0] == '\0')
             continue;
 
-        if (setjmp(gw_error_jmp) != 0)
-            continue;
-
         gw_exec_direct(line);
     }
 
+    if (interactive)
+        tui_shutdown();
     snd_shutdown();
     if (gw_hal)
         gw_hal->shutdown();
