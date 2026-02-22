@@ -1509,7 +1509,7 @@ void gw_exec_stmt(void)
         program_line_t *target = gw_find_line(num);
         if (!target) gw_error(ERR_UL);
 
-        if (gw.gosub_sp >= 24)
+        if (gw.gosub_sp >= MAX_GOSUB_DEPTH)
             gw_error(ERR_OM);
         gw.gosub_stack[gw.gosub_sp].ret_text = gw.text_ptr;
         gw.gosub_stack[gw.gosub_sp].ret_line = gw.cur_line;
@@ -1593,7 +1593,7 @@ void gw_exec_stmt(void)
             }
         }
 
-        if (gw.for_sp >= 16)
+        if (gw.for_sp >= MAX_FOR_DEPTH)
             gw_error(ERR_OM);
 
         for_entry_t *f = &gw.for_stack[gw.for_sp++];
@@ -1759,7 +1759,7 @@ void gw_exec_stmt(void)
                 }
             }
             if (!found) {
-                if (gw.while_sp >= 16)
+                if (gw.while_sp >= MAX_WHILE_DEPTH)
                     gw_error(ERR_OM);
                 gw.while_stack[gw.while_sp].while_text = while_text;
                 gw.while_stack[gw.while_sp].while_line = while_line;
@@ -1887,7 +1887,7 @@ void gw_exec_stmt(void)
         if (!target) gw_error(ERR_UL);
 
         if (is_gosub) {
-            if (gw.gosub_sp >= 24)
+            if (gw.gosub_sp >= MAX_GOSUB_DEPTH)
                 gw_error(ERR_OM);
             gw.gosub_stack[gw.gosub_sp].ret_text = gw.text_ptr;
             gw.gosub_stack[gw.gosub_sp].ret_line = gw.cur_line;

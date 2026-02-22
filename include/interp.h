@@ -32,11 +32,14 @@ typedef struct {
     int option_base;
 
     /* Control flow stacks */
-    for_entry_t for_stack[16];
+#define MAX_FOR_DEPTH   16
+#define MAX_GOSUB_DEPTH 24
+#define MAX_WHILE_DEPTH 16
+    for_entry_t for_stack[MAX_FOR_DEPTH];
     int for_sp;
-    gosub_entry_t gosub_stack[24];
+    gosub_entry_t gosub_stack[MAX_GOSUB_DEPTH];
     int gosub_sp;
-    while_entry_t while_stack[16];
+    while_entry_t while_stack[MAX_WHILE_DEPTH];
     int while_sp;
 
     /* DEF FN */
