@@ -4,6 +4,9 @@ project(gw-basic-2026 C)
 set(CMAKE_C_STANDARD 11)
 set(CMAKE_C_STANDARD_REQUIRED ON)
 
+# POSIX extensions (opendir, chdir, strcasecmp, etc.)
+add_compile_definitions(_DEFAULT_SOURCE)
+
 # Warnings
 add_compile_options(-Wall -Wextra -Wno-unused-parameter)
 

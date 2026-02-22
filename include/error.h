@@ -49,6 +49,8 @@
 #define ERR_NM  65   /* Bad file name */
 #define ERR_DS  67   /* Direct statement in file */
 #define ERR_TF  68   /* Too many files */
+#define ERR_DA  70   /* Disk already exists */
+#define ERR_PE  76   /* Path not found */
 
 const char *gw_error_msg(int errnum);
 void gw_error(int errnum);

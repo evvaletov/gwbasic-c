@@ -7,6 +7,10 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
+#include <dirent.h>
+#include <sys/stat.h>
+#include <unistd.h>
+#include <errno.h>
 
 /*
  * Execution loop and control flow - the heart of the interpreter.
@@ -14,6 +18,14 @@
  */
 
 jmp_buf gw_run_jmp;
+
+static int ci_strcmp(const char *a, const char *b)
+{
+    for (;; a++, b++) {
+        int d = tolower((unsigned char)*a) - tolower((unsigned char)*b);
+        if (d != 0 || !*a) return d;
+    }
+}
 
 /* ================================================================
  * Program Storage
@@ -871,6 +883,124 @@ void gw_exec_stmt(void)
             gw_str_free(&s.sval);
             snd_play(cmd);
             free(cmd);
+            return;
+        }
+        /* FILES [filespec$] */
+        if (xstmt == XSTMT_FILES) {
+            gw_chrget();
+            gw_skip_spaces();
+            char *pattern = NULL;
+            if (gw_chrgot() && gw_chrgot() != ':' && gw_chrgot() != TOK_ELSE) {
+                gw_value_t v = gw_eval_str();
+                pattern = gw_str_to_cstr(&v.sval);
+                gw_str_free(&v.sval);
+            }
+            const char *dir = ".";
+            char dirpath[256] = ".";
+            const char *wild = NULL;
+            if (pattern) {
+                /* Split "dir/pattern" into directory and wildcard */
+                char *sep = strrchr(pattern, '/');
+                if (sep) {
+                    *sep = '\0';
+                    snprintf(dirpath, sizeof(dirpath), "%s", pattern);
+                    dir = dirpath;
+                    wild = sep + 1;
+                } else {
+                    wild = pattern;
+                }
+                if (wild && !*wild) wild = NULL;
+            }
+            DIR *dp = opendir(dir);
+            if (!dp) { free(pattern); gw_error(ERR_PE); }
+            struct dirent *ent;
+            int col = 0;
+            while ((ent = readdir(dp)) != NULL) {
+                if (ent->d_name[0] == '.') continue;
+                if (wild) {
+                    /* Simple *.ext matching: if wild starts with *. check extension */
+                    if (wild[0] == '*' && wild[1] == '.') {
+                        const char *ext = strrchr(ent->d_name, '.');
+                        if (!ext || ci_strcmp(ext + 1, wild + 2) != 0) continue;
+                    } else if (strcmp(wild, "*.*") != 0 && strcmp(wild, "*") != 0) {
+                        /* Exact match */
+                        if (ci_strcmp(ent->d_name, wild) != 0) continue;
+                    }
+                }
+                char entry[270];
+                snprintf(entry, sizeof(entry), "%-14s", ent->d_name);
+                if (gw_hal) gw_hal->puts(entry);
+                else fputs(entry, stdout);
+                col += 14;
+                if (col >= 70) {
+                    if (gw_hal) gw_hal->puts("\n");
+                    else fputs("\n", stdout);
+                    col = 0;
+                }
+            }
+            if (col > 0) {
+                if (gw_hal) gw_hal->puts("\n");
+                else fputs("\n", stdout);
+            }
+            closedir(dp);
+            free(pattern);
+            return;
+        }
+        /* SHELL [command$] */
+        if (xstmt == XSTMT_SHELL) {
+            gw_chrget();
+            gw_skip_spaces();
+            if (gw_chrgot() && gw_chrgot() != ':' && gw_chrgot() != TOK_ELSE) {
+                gw_value_t v = gw_eval_str();
+                char *cmd = gw_str_to_cstr(&v.sval);
+                gw_str_free(&v.sval);
+                int rc = system(cmd);
+                free(cmd);
+                (void)rc;
+            } else {
+                const char *sh = getenv("SHELL");
+                if (!sh) sh = "/bin/sh";
+                int rc = system(sh);
+                (void)rc;
+            }
+            return;
+        }
+        /* CHDIR path$ */
+        if (xstmt == XSTMT_CHDIR) {
+            gw_chrget();
+            gw_value_t v = gw_eval_str();
+            char *path = gw_str_to_cstr(&v.sval);
+            gw_str_free(&v.sval);
+            if (chdir(path) != 0) { free(path); gw_error(ERR_PE); }
+            free(path);
+            return;
+        }
+        /* MKDIR path$ */
+        if (xstmt == XSTMT_MKDIR) {
+            gw_chrget();
+            gw_value_t v = gw_eval_str();
+            char *path = gw_str_to_cstr(&v.sval);
+            gw_str_free(&v.sval);
+            if (mkdir(path, 0755) != 0) {
+                int e = errno;
+                free(path);
+                gw_error(e == EEXIST ? ERR_FE : ERR_PE);
+            }
+            free(path);
+            return;
+        }
+        /* RMDIR path$ */
+        if (xstmt == XSTMT_RMDIR) {
+            gw_chrget();
+            gw_value_t v = gw_eval_str();
+            char *path = gw_str_to_cstr(&v.sval);
+            gw_str_free(&v.sval);
+            if (rmdir(path) != 0) {
+                int e = errno;
+                free(path);
+                gw_error(e == ENOENT ? ERR_PE : ERR_FF);
+            }
+            free(path);
             return;
         }
         /* Stubs: VIEW, WINDOW, PALETTE */

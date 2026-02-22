@@ -23,7 +23,7 @@ Interactive mode launches the authentic GW-BASIC full-screen editor:
 
 ```
 $ ./gwbasic
-GW-BASIC 2026 0.5.0
+GW-BASIC 2026 0.6.0
 (C) Eremey Valetov 2026. MIT License.
 Based on Microsoft GW-BASIC assembly source.
 Ok
@@ -73,7 +73,8 @@ SPACE$, STRING$, HEX$, OCT$, INSTR, INPUT$
 | Program I/O | SAVE, LOAD, MERGE, CHAIN |
 | Error handling | ON ERROR GOTO, RESUME, ERROR, ERR, ERL |
 | User functions | DEF FN, RANDOMIZE |
-| File management | KILL, NAME |
+| File management | KILL, NAME, FILES, MKDIR, RMDIR, CHDIR, SHELL |
+| Date/time | DATE$, TIME$, TIMER |
 | Screen | LOCATE, COLOR, WIDTH, SCREEN, KEY ON/OFF/LIST |
 | Graphics | PSET, PRESET, LINE, CIRCLE, DRAW, PAINT |
 | Sound | SOUND, BEEP, PLAY (MML) |
@@ -145,7 +146,7 @@ Key design differences from the original:
 
 ## Tests
 
-50 test programs in `tests/programs/`, with CI via GitHub Actions:
+52 test programs in `tests/programs/`, with CI via GitHub Actions:
 
 ```bash
 bash tests/run_tests.sh

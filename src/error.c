@@ -52,6 +52,8 @@ static const struct { int num; const char *msg; } error_table[] = {
     { 65, "Bad file name" },
     { 67, "Direct statement in file" },
     { 68, "Too many files" },
+    { 70, "Disk already exists" },
+    { 76, "Path not found" },
     {  0, NULL }
 };
 

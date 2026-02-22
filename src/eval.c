@@ -4,6 +4,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <math.h>
+#include <time.h>
 
 /*
  * Expression evaluator - reimplements GWEVAL.ASM's FRMEVL.
@@ -919,7 +920,7 @@ static gw_value_t eval_atom(void)
         gw.text_ptr = save;
     }
 
-    /* Extended statement tokens that work as functions (DATE$, TIME$) */
+    /* Extended statement tokens that work as functions (DATE$, TIME$, TIMER) */
     if (tok == TOK_PREFIX_FE) {
         uint8_t *save = gw.text_ptr;
         gw_chrget();
@@ -928,11 +929,27 @@ static gw_value_t eval_atom(void)
             gw_chrget();
             gw_value_t v;
             v.type = VT_STR;
+            char tbuf[16];
+            time_t now = time(NULL);
+            struct tm *tm = localtime(&now);
             if (xtok == XSTMT_DATE) {
-                v.sval = gw_str_from_cstr("01-01-2026");
+                snprintf(tbuf, sizeof(tbuf), "%02d-%02d-%04d",
+                         tm->tm_mon + 1, tm->tm_mday, tm->tm_year + 1900);
+                v.sval = gw_str_from_cstr(tbuf);
             } else {
-                v.sval = gw_str_from_cstr("00:00:00");
+                snprintf(tbuf, sizeof(tbuf), "%02d:%02d:%02d",
+                         tm->tm_hour, tm->tm_min, tm->tm_sec);
+                v.sval = gw_str_from_cstr(tbuf);
             }
+            return v;
+        }
+        if (xtok == XSTMT_TIMER) {
+            gw_chrget();
+            time_t now = time(NULL);
+            struct tm *tm = localtime(&now);
+            gw_value_t v;
+            v.type = VT_SNG;
+            v.fval = (float)(tm->tm_hour * 3600 + tm->tm_min * 60 + tm->tm_sec);
             return v;
         }
         gw.text_ptr = save;
